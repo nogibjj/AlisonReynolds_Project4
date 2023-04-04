@@ -23,10 +23,13 @@ fn main() {
     match args.command {
         Some(Commands::Predict {}) => {
             let (warn, weath) = big_data::read_data();
-            big_data::print_rows(warn.clone());
-            big_data::print_rows(weath.clone());
-            let join = big_data::joining_data(warn,weath);
-            big_data::print_rows(join);
+            //big_data::print_rows(warn.clone());
+            //big_data::print_rows(weath.clone());
+            let join = big_data::joining_data(warn, weath);
+            //big_data::print_rows(join);
+            let (y, x) = big_data::feature_target(join);
+            let xmatrix = big_data::convert_features_to_matrix(&x);
+            let _result = big_data::train_mod(xmatrix, y);
             println!("Done!");
         }
         None => println!("Missing function parameter"),

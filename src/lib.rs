@@ -1,9 +1,12 @@
 use polars::prelude::*;
-//use linfa::prelude::*;
-//use linfa_elasticnet::{ElasticNet, Result};
+use smartcore::linalg::basic::arrays::MutArray;
+use smartcore::linalg::basic::matrix::DenseMatrix;
+use smartcore::linear::logistic_regression::LogisticRegression;
+use smartcore::metrics::accuracy;
+use smartcore::model_selection::train_test_split;
 
 const WARNINGS: &str = "src/data/heat_alerts.csv";
-const WEATHER: &str = "src/data/weather_conditions.csv";
+const WEATHER: &str = "src/data/rdu_daily.csv";
 
 pub fn read_data() -> (DataFrame, DataFrame) {
     let warn_df = CsvReader::from_path(WARNINGS).unwrap().finish().unwrap();
@@ -24,34 +27,67 @@ pub fn joining_data(warn_df: DataFrame, weather_df: DataFrame) -> DataFrame {
     joined_df
 }
 
+pub fn feature_target(mut joined_df: DataFrame) -> (Vec<i32>, DataFrame) {
+    let target = joined_df.drop_in_place("is_heat").unwrap();
+    let _no_date = joined_df.drop_in_place("date").unwrap();
+
+    let y: Vec<bool> = target.bool().unwrap().into_no_null_iter().collect();
+    let y = y.into_iter().map(|x| x as i32).collect();
+
+    (y, joined_df)
+}
+
+pub fn convert_features_to_matrix(x: &DataFrame) -> DenseMatrix<f64> {
+    /* function to convert feature dataframe to a DenseMatrix, readable by smartcore*/
+
+    let nrows = x.height();
+    let ncols = x.width();
+    let tot = nrows * ncols;
+    // convert to array
+    let features_res = x.to_ndarray::<Float64Type>().unwrap();
+    // create a zero matrix and populate with features
+
+    let zero_vec = vec![0.0; tot];
+
+    let mut xmatrix: DenseMatrix<f64> = DenseMatrix::new(nrows, ncols, zero_vec, false);
+    // populate the matrix
+    // initialize row and column counters
+    let mut col: u32 = 0;
+    let mut row: u32 = 0;
+
+    for val in features_res.iter() {
+        // Debug
+        //println!("{},{}", usize::try_from(row).unwrap(), usize::try_from(col).unwrap());
+        // define the row and col in the final matrix as usize
+        let m_row = usize::try_from(row).unwrap();
+        let m_col = usize::try_from(col).unwrap();
+        // NB we are dereferencing the borrow with *val otherwise we would have a &val type, which is
+        // not what set wants
+        xmatrix.set((m_row, m_col), *val);
+        // check what we have to update
+        if m_col == ncols - 1 {
+            row += 1;
+            col = 0;
+        } else {
+            col += 1;
+        }
+    }
+
+    xmatrix
+}
 
 //accepts ratio of training data
-//pub fn predicting(joined_df: DataFrame) -> Result<()> {
-    // randomly select 80% of the data for training
-//    let (train, valid) = joined_df
-//        .with_column(
-            // create a random boolean column
-//            col("is_train").apply(|_| {
-//                let mut rng = rand::thread_rng();
-//                rng.gen_bool(0.8)
-//            }),
-//        )
-//        .split_by_rand_bool("is_train", 0.8);
+pub fn train_mod(x: DenseMatrix<f64>, y: Vec<i32>) -> f64 {
+    // train split
+    let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.3, true, Some(124));
 
-    // train pure LASSO model with 0.3 penalty
- //   let model = ElasticNet::params()
-//        .penalty(0.3)
-//        .l1_ratio(1.0)
- //       .fit(&train)?;
-
-//    println!("intercept:  {}", model.intercept());
-//    println!("params: {}", model.hyperplane());
-
- //   println!("z score: {:?}", model.z_score());
-
-    // validate
-//    let y_est = model.predict(&valid);
- //   println!("predicted variance: {}", valid.r2(&y_est)?);
-
- //   Ok(())
-//}
+    // model
+    let linear_regression =
+        LogisticRegression::fit(&x_train, &y_train, Default::default()).unwrap();
+    // predictions
+    let preds = linear_regression.predict(&x_test).unwrap();
+    // metrics
+    let acc = accuracy(&y_test, &preds);
+    println!("Accuracy: {:?}", acc);
+    acc
+}

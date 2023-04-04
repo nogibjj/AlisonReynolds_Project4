@@ -7,7 +7,10 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
-polars = {version = "0.27.2"}
-linfa = "0.6.1"
-linfa-elasticnet = "0.6.1"
-rand = "0.8.5"
+polars = {version = "0.28.0"}
+smartcore = "0.3.1"
+ndarray = "0.15.4"
+polars-core = {version = "0.28.0", features=["ndarray"]}
+arrow = "36.0.0"
+serde = "1.0.126"
+serde_derive = "1.0.126"
