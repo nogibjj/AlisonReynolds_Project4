@@ -38,7 +38,7 @@ pub fn feature_target(mut joined_df: DataFrame) -> (Vec<i32>, DataFrame) {
 }
 
 pub fn convert_features_to_matrix(x: &DataFrame) -> DenseMatrix<f64> {
-    /* function to convert feature dataframe to a DenseMatrix, readable by smartcore*/
+    // function to convert feature dataframe to a DenseMatrix, readable by smartcore
 
     let nrows = x.height();
     let ncols = x.width();
@@ -50,21 +50,18 @@ pub fn convert_features_to_matrix(x: &DataFrame) -> DenseMatrix<f64> {
     let zero_vec = vec![0.0; tot];
 
     let mut xmatrix: DenseMatrix<f64> = DenseMatrix::new(nrows, ncols, zero_vec, false);
-    // populate the matrix
-    // initialize row and column counters
+    // initialize the row and column counters
     let mut col: u32 = 0;
     let mut row: u32 = 0;
 
     for val in features_res.iter() {
-        // Debug
-        //println!("{},{}", usize::try_from(row).unwrap(), usize::try_from(col).unwrap());
-        // define the row and col in the final matrix as usize
+
+        // converting into usize
         let m_row = usize::try_from(row).unwrap();
         let m_col = usize::try_from(col).unwrap();
-        // NB we are dereferencing the borrow with *val otherwise we would have a &val type, which is
-        // not what set wants
+
         xmatrix.set((m_row, m_col), *val);
-        // check what we have to update
+        // incrementing row and columns
         if m_col == ncols - 1 {
             row += 1;
             col = 0;
@@ -76,16 +73,16 @@ pub fn convert_features_to_matrix(x: &DataFrame) -> DenseMatrix<f64> {
     xmatrix
 }
 
-//accepts ratio of training data
-pub fn train_mod(x: DenseMatrix<f64>, y: Vec<i32>) -> f64 {
+// training function
+pub fn train_mod(x: DenseMatrix<f64>, y: Vec<i32>, test: f32, seed: u64) -> f64 {
     // train split
-    let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, 0.3, true, Some(124));
+    let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, test, true, Some(seed));
 
     // model
-    let linear_regression =
+    let log_regression =
         LogisticRegression::fit(&x_train, &y_train, Default::default()).unwrap();
     // predictions
-    let preds = linear_regression.predict(&x_test).unwrap();
+    let preds = log_regression.predict(&x_test).unwrap();
     // metrics
     let acc = accuracy(&y_test, &preds);
     println!("Accuracy: {:?}", acc);
