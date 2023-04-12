@@ -16,9 +16,9 @@ test:
 	cargo test --quiet
 
 run:
-	cargo run
+	cargo run -- predict .8 721
 
 build-release:
 	cargo build --release
 
-all: format lint test run
+all: format-check lint test run

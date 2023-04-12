@@ -55,7 +55,6 @@ pub fn convert_features_to_matrix(x: &DataFrame) -> DenseMatrix<f64> {
     let mut row: u32 = 0;
 
     for val in features_res.iter() {
-
         // converting into usize
         let m_row = usize::try_from(row).unwrap();
         let m_col = usize::try_from(col).unwrap();
@@ -79,8 +78,7 @@ pub fn train_mod(x: DenseMatrix<f64>, y: Vec<i32>, test: f32, seed: u64) -> f64 
     let (x_train, x_test, y_train, y_test) = train_test_split(&x, &y, test, true, Some(seed));
 
     // model
-    let log_regression =
-        LogisticRegression::fit(&x_train, &y_train, Default::default()).unwrap();
+    let log_regression = LogisticRegression::fit(&x_train, &y_train, Default::default()).unwrap();
     // predictions
     let preds = log_regression.predict(&x_test).unwrap();
     // metrics

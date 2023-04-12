@@ -11,6 +11,9 @@ polars = {version = "0.28.0"}
 smartcore = "0.3.1"
 ndarray = "0.15.4"
 polars-core = {version = "0.28.0", features=["ndarray"]}
-arrow = "36.0.0"
+arrow = "37.0.0"
 serde = "1.0.126"
 serde_derive = "1.0.126"
+
+[dev-dependencies]
+assert_cmd = "2.0.8"
